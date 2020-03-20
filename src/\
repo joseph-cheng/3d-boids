@@ -1,0 +1,14 @@
+#pragma once
+#include <glm/glm.hpp>
+#include "constants.h"
+
+class System {
+    glm::vec3[NUM_BOIDS] old_positions;
+    glm::vec3[NUM_BOIDS] old_velocities;
+
+    glm::vec3[NUM_BOIDS] positions;
+    glm::vec3[NUM_BOIDS] velocities;
+
+
+
+}
