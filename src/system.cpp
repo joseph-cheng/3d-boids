@@ -6,6 +6,8 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include <iostream>
+#include <set>
+#include <tuple>
 
 System::System(int boids_to_generate) {
     boids_tree = new Octree(AABB(glm::vec3(0.0f), WORLD_RADIUS));
@@ -20,10 +22,10 @@ System::System(int boids_to_generate) {
 }
 
 void System::update(float boid_data[], glm::vec3 player_pos) {
-    Octree* new_boids_tree = new Octree(AABB(glm::vec3(0.0f), WORLD_RADIUS));
     int i = 0;
     for (Boid* boid : boids) {
         std::vector<Boid*> nearby_boids = boids_tree->get_nearby_boids(boid);
+        Octree* octree_with_boid = boids_tree->get_boid_node(boid);
 
         glm::vec3 sep = boid->separation(nearby_boids);
         glm::vec3 coh = boid->cohesion(nearby_boids);
@@ -33,7 +35,12 @@ void System::update(float boid_data[], glm::vec3 player_pos) {
 
         boid->apply_force(coh+sep+ali);
         boid->update();
-        new_boids_tree->insert(boid);
+
+
+        if (!octree_with_boid->boundary.contains(boid->position)) {
+            octree_with_boid->remove(boid);
+            boids_tree->insert(boid);
+        }
 
         boid_data[i*6] = boid->position.x;
         boid_data[i*6+1] = boid->position.y;
@@ -45,7 +52,5 @@ void System::update(float boid_data[], glm::vec3 player_pos) {
 
         i++;
     }
-    delete boids_tree;
-    boids_tree = new_boids_tree;
 
 }

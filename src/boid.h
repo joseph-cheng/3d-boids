@@ -3,9 +3,9 @@
 #include <glm/glm.hpp>
 
 class Boid {
-private:
-    int ID;
 public:
+
+    int ID;
     glm::vec3 position;
     glm::vec3 velocity;
     glm::vec3 acceleration;

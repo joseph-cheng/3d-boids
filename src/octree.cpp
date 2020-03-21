@@ -4,7 +4,9 @@
 #include "aabb.h"
 #include <glm/glm.hpp>
 #include <vector>
+#include <set>
 #include <iostream>
+#include <tuple>
 
 Octree::Octree(AABB boundary) {
     nwb = nullptr;
@@ -15,10 +17,30 @@ Octree::Octree(AABB boundary) {
     nef = nullptr;
     sef = nullptr;
     swf = nullptr;
+    parent = nullptr;
+
 
     this->boundary = boundary;
 
     boid = nullptr;
+}
+
+Octree::Octree(AABB boundary, Octree* parent) {
+    nwb = nullptr;
+    neb = nullptr;
+    seb = nullptr;
+    swb = nullptr;
+    nwf = nullptr;
+    nef = nullptr;
+    sef = nullptr;
+    swf = nullptr;
+
+    this->parent = parent;
+
+    this->boundary = boundary;
+
+    boid = nullptr;
+
 }
 
 void Octree::subdivide() {
@@ -26,50 +48,92 @@ void Octree::subdivide() {
     nwb = new Octree(AABB(glm::vec3(boundary.centre.x - new_half_size,
                                     boundary.centre.y + new_half_size,
                                     boundary.centre.z - new_half_size),
-                          new_half_size));
+                          new_half_size),
+                          this);
 
     neb = new Octree(AABB(glm::vec3(boundary.centre.x + new_half_size,
                                     boundary.centre.y + new_half_size,
                                     boundary.centre.z - new_half_size),
-                          new_half_size));
+                          new_half_size),
+                          this);
 
     seb = new Octree(AABB(glm::vec3(boundary.centre.x + new_half_size,
                                     boundary.centre.y - new_half_size,
                                     boundary.centre.z - new_half_size),
-                          new_half_size));
+                          new_half_size),
+                          this);
 
     swb = new Octree(AABB(glm::vec3(boundary.centre.x - new_half_size,
                                     boundary.centre.y - new_half_size,
                                     boundary.centre.z - new_half_size),
-                          new_half_size));
+                          new_half_size),
+                          this);
 
     nwf = new Octree(AABB(glm::vec3(boundary.centre.x - new_half_size,
                                     boundary.centre.y + new_half_size,
                                     boundary.centre.z + new_half_size),
-                          new_half_size));
+                          new_half_size),
+                          this);
 
 
     nef = new Octree(AABB(glm::vec3(boundary.centre.x + new_half_size,
                                     boundary.centre.y + new_half_size,
                                     boundary.centre.z + new_half_size),
-                          new_half_size));
+                          new_half_size),
+                          this);
 
     sef = new Octree(AABB(glm::vec3(boundary.centre.x + new_half_size,
                                     boundary.centre.y - new_half_size,
                                     boundary.centre.z + new_half_size),
-                          new_half_size));
+                          new_half_size),
+                          this);
 
     swf = new Octree(AABB(glm::vec3(boundary.centre.x - new_half_size,
                                     boundary.centre.y - new_half_size,
                                     boundary.centre.z + new_half_size),
-                          new_half_size));
+                          new_half_size),
+                          this);
+
+    if (boid->position.x >= boundary.centre.x) {
+        if (boid->position.y >= boundary.centre.y) {
+            if (boid->position.z >= boundary.centre.z) {
+                nef->insert(boid);
+            }
+            else {
+                neb->insert(boid);
+            }
+        }
+        else {
+            if (boid->position.z >= boundary.centre.z) {
+                sef->insert(boid);
+            }
+                else {
+                    seb->insert(boid);
+                }
+            }
+        }
+    else {
+        if (boid->position.y >= boundary.centre.y) {
+            if (boid->position.z >= boundary.centre.z) {
+                nwf->insert(boid);
+            }
+            else {
+                nwb->insert(boid);
+            }
+        }
+        else {
+            if (boid->position.z >= boundary.centre.z) {
+                swf->insert(boid);
+            }
+            else {
+                swb->insert(boid);
+            }
+        }
+    }
+    boid = nullptr;
 }
 
 bool Octree::insert(Boid* boid) {
-
-    if (!boundary.contains(boid->position)) {
-        return false;
-    }
 
     if (this->boid == nullptr) {
         this->boid = boid;
@@ -118,14 +182,30 @@ bool Octree::insert(Boid* boid) {
     }
 }
 
-bool Octree::remove(Boid* boid) {
-
-    if (!boundary.contains(boid->position)) {
-        return false;
+void Octree::collapse() {
+    if (all_children_empty()) {
+        nwb = nullptr;
+        nwf = nullptr;
+        neb = nullptr;
+        nef = nullptr;
+        swb = nullptr;
+        swf = nullptr;
+        seb = nullptr;
+        sef = nullptr;
+        parent->collapse();
     }
+}
+
+bool Octree::remove(Boid* boid) {
 
     if (this->boid == boid) {
         this->boid = nullptr;
+
+        if (parent != nullptr) {
+            parent->collapse();
+        }
+
+
         return true;
     }
 
@@ -209,4 +289,74 @@ std::vector<Boid*> Octree::get_nearby_boids(Boid* boid) {
     return nearby_boids;
 }
 
+Octree* Octree::get_boid_node(Boid* boid) {
+    if (boid == this->boid) {
+        return this;
+    }
+    if (boid->position.x >= boundary.centre.x) {
+        if (boid->position.y >= boundary.centre.y) {
+            if (boid->position.z >= boundary.centre.z) {
+                return nef->get_boid_node(boid);
+            }
+            else {
+                return neb->get_boid_node(boid);
+            }
+        }
+        else {
+            if (boid->position.z >= boundary.centre.z) {
+                return sef->get_boid_node(boid);
+            }
+            else {
+                return seb->get_boid_node(boid);
+            }
+        }
+    }
+    else {
+        if (boid->position.y >= boundary.centre.y) {
+            if (boid->position.z >= boundary.centre.z) {
+                return nwf->get_boid_node(boid);
+            }
+            else {
+                return nwb->get_boid_node(boid);
+            }
+        }
+        else {
+            if (boid->position.z >= boundary.centre.z) {
+                return swf->get_boid_node(boid);
+            }
+            else {
+                return swb->get_boid_node(boid);
+            }
+        }
+    }
+}
 
+bool Octree::all_children_empty() {
+    return nwb->boid == nullptr && nwb->nwb == nullptr &&
+           nwf->boid == nullptr && nwf->nwb == nullptr &&
+           neb->boid == nullptr && neb->nwb == nullptr &&
+           nef->boid == nullptr && nef->nwb == nullptr &&
+           swb->boid == nullptr && swb->nwb == nullptr &&
+           swf->boid == nullptr && swf->nwb == nullptr &&
+           seb->boid == nullptr && seb->nwb == nullptr &&
+           sef->boid == nullptr && sef->nwb == nullptr;
+}
+
+void Octree::flatten(std::set<std::tuple<Boid*, Octree*>>& to_populate) {
+    if (boid != nullptr) {
+        to_populate.insert(std::make_tuple(boid, this));
+    }
+    if (nwb == nullptr) {
+        return;
+    }
+
+    nwb->flatten(to_populate);
+    nwf->flatten(to_populate);
+    neb->flatten(to_populate);
+    nef->flatten(to_populate);
+    swb->flatten(to_populate);
+    swf->flatten(to_populate);
+    seb->flatten(to_populate);
+    sef->flatten(to_populate);
+
+}

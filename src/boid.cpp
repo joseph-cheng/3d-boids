@@ -112,25 +112,25 @@ void Boid::update() {
     this->velocity = limit(this->velocity, MAX_SPEED);
     this->position += this->velocity;
 
-    if (this->position.x > WORLD_RADIUS) {
-        this->position.x = -WORLD_RADIUS;
+    if (this->position.x >= WORLD_RADIUS) {
+        this->position.x = -WORLD_RADIUS + EPSILON;
     }
-    else if (this->position.x < -WORLD_RADIUS) {
-        this->position.x = WORLD_RADIUS;
-    }
-
-    if (this->position.y > WORLD_RADIUS) {
-        this->position.y = -WORLD_RADIUS;
-    }
-    else if (this->position.y < -WORLD_RADIUS) {
-        this->position.y = WORLD_RADIUS;
+    else if (this->position.x <= -WORLD_RADIUS) {
+        this->position.x = WORLD_RADIUS - EPSILON;
     }
 
-    if (this->position.z > WORLD_RADIUS) {
-        this->position.z = -WORLD_RADIUS;
+    if (this->position.y >= WORLD_RADIUS) {
+        this->position.y = -WORLD_RADIUS + EPSILON;
     }
-    else if (this->position.z < -WORLD_RADIUS) {
-        this->position.z = WORLD_RADIUS;
+    else if (this->position.y <= -WORLD_RADIUS) {
+        this->position.y = WORLD_RADIUS - EPSILON;
+    }
+
+    if (this->position.z >= WORLD_RADIUS) {
+        this->position.z = -WORLD_RADIUS + EPSILON;
+    }
+    else if (this->position.z <= -WORLD_RADIUS) {
+        this->position.z = WORLD_RADIUS - EPSILON;
     }
 
     this->acceleration *= 0.0f;
