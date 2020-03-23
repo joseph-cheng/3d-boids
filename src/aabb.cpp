@@ -15,7 +15,9 @@ bool AABB::contains(glm::vec3 point) {
     return point.x > centre.x - half_size &&
            point.x < centre.x + half_size &&
            point.y > centre.y - half_size &&
-           point.y < centre.y + half_size;
+           point.y < centre.y + half_size &&
+           point.z > centre.z - half_size &&
+           point.z < centre.z + half_size;
 }
 
 bool AABB::intersects(AABB other) {
