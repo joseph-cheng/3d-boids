@@ -1,3 +1,4 @@
+#include "cfg.hpp"
 #include "shader.h"
 #include "camera.h"
 #include "constants.h"
@@ -9,6 +10,7 @@
 #include <glm/glm.hpp>
 #include <iostream>
 #include <vector>
+#include <cstdlib>
 
 
 void keyboard_input(GLFWwindow* window) {
@@ -60,7 +62,14 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 }
 
 
-int main() {
+int main(int argc, char *argv[]) {
+    Config_t cfg;
+    Status_t err;
+    err = parse_cmd(argc, argv, &cfg);
+    if (err != STATUS_SUCCESS) {
+        fprintf(stderr, "Failed to parse cmd line\n");
+        return 1;
+    }
     glfwInit();
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -90,9 +99,11 @@ int main() {
 
     Shader shader("../src/vert.glsl", "../src/frag.glsl", "../src/geom.glsl");
 
-    System* system = new System(NUM_BOIDS);
 
-    float boid_data[6 * NUM_BOIDS];
+    System* system = new System(cfg.num_boids);
+
+    float *boid_data  = (float *)calloc(6 * cfg.num_boids, sizeof(float));
+    size_t boid_data_size = 6 * cfg.num_boids;
 
 
     unsigned int VAO;
@@ -102,7 +113,7 @@ int main() {
 
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(boid_data), boid_data, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, boid_data_size, boid_data, GL_DYNAMIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
     glBindVertexArray(0);
@@ -131,8 +142,8 @@ int main() {
         shader.set_matrix_4("view_mat", view);
         glBindVertexArray(VAO);
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(boid_data), boid_data);
-        glDrawArrays(GL_LINES, 0, NUM_BOIDS);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, boid_data_size, boid_data);
+        glDrawArrays(GL_LINES, 0, cfg.num_boids);
         glBindVertexArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
@@ -141,4 +152,5 @@ int main() {
         glfwPollEvents();
     }
     glfwTerminate();
+    free(boid_data);
 }

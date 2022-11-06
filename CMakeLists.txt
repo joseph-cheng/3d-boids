@@ -21,6 +21,7 @@ link_directories(${PROJECT_LIB_DIR})
 include_directories(${PROJECT_INCLUDE_DIR})
 
 
+
 set (SOURCES
     ${PROJECT_SOURCE_DIR}/main.cpp
     ${PROJECT_SOURCE_DIR}/boid.cpp
@@ -30,6 +31,7 @@ set (SOURCES
     ${PROJECT_SOURCE_DIR}/system.cpp
     ${PROJECT_SOURCE_DIR}/octree.cpp
     ${PROJECT_SOURCE_DIR}/aabb.cpp
+    ${PROJECT_SOURCE_DIR}/cfg.cpp
     ${PROJECT_DEPS_DIR}/glad/glad.c
     )
 

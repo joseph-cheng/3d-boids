@@ -5,3 +5,5 @@
 build/
 res/
 lib/
+.cache/
+compile_commands.json
